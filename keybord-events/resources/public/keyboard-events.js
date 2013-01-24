@@ -22090,9 +22090,321 @@ goog.events.getUniqueId = function(identifier) {
 goog.debug.entryPointRegistry.register(function(transformer) {
   goog.events.handleBrowserEvent_ = transformer(goog.events.handleBrowserEvent_)
 });
+goog.provide("goog.events.EventTarget");
+goog.require("goog.Disposable");
+goog.require("goog.events");
+goog.events.EventTarget = function() {
+  goog.Disposable.call(this)
+};
+goog.inherits(goog.events.EventTarget, goog.Disposable);
+goog.events.EventTarget.prototype.customEvent_ = true;
+goog.events.EventTarget.prototype.parentEventTarget_ = null;
+goog.events.EventTarget.prototype.getParentEventTarget = function() {
+  return this.parentEventTarget_
+};
+goog.events.EventTarget.prototype.setParentEventTarget = function(parent) {
+  this.parentEventTarget_ = parent
+};
+goog.events.EventTarget.prototype.addEventListener = function(type, handler, opt_capture, opt_handlerScope) {
+  goog.events.listen(this, type, handler, opt_capture, opt_handlerScope)
+};
+goog.events.EventTarget.prototype.removeEventListener = function(type, handler, opt_capture, opt_handlerScope) {
+  goog.events.unlisten(this, type, handler, opt_capture, opt_handlerScope)
+};
+goog.events.EventTarget.prototype.dispatchEvent = function(e) {
+  return goog.events.dispatchEvent(this, e)
+};
+goog.events.EventTarget.prototype.disposeInternal = function() {
+  goog.events.EventTarget.superClass_.disposeInternal.call(this);
+  goog.events.removeAll(this);
+  this.parentEventTarget_ = null
+};
+goog.provide("goog.events.KeyCodes");
+goog.require("goog.userAgent");
+goog.events.KeyCodes = {WIN_KEY_FF_LINUX:0, MAC_ENTER:3, BACKSPACE:8, TAB:9, NUM_CENTER:12, ENTER:13, SHIFT:16, CTRL:17, ALT:18, PAUSE:19, CAPS_LOCK:20, ESC:27, SPACE:32, PAGE_UP:33, PAGE_DOWN:34, END:35, HOME:36, LEFT:37, UP:38, RIGHT:39, DOWN:40, PRINT_SCREEN:44, INSERT:45, DELETE:46, ZERO:48, ONE:49, TWO:50, THREE:51, FOUR:52, FIVE:53, SIX:54, SEVEN:55, EIGHT:56, NINE:57, FF_SEMICOLON:59, FF_EQUALS:61, QUESTION_MARK:63, A:65, B:66, C:67, D:68, E:69, F:70, G:71, H:72, I:73, J:74, K:75, L:76, M:77, 
+N:78, O:79, P:80, Q:81, R:82, S:83, T:84, U:85, V:86, W:87, X:88, Y:89, Z:90, META:91, WIN_KEY_RIGHT:92, CONTEXT_MENU:93, NUM_ZERO:96, NUM_ONE:97, NUM_TWO:98, NUM_THREE:99, NUM_FOUR:100, NUM_FIVE:101, NUM_SIX:102, NUM_SEVEN:103, NUM_EIGHT:104, NUM_NINE:105, NUM_MULTIPLY:106, NUM_PLUS:107, NUM_MINUS:109, NUM_PERIOD:110, NUM_DIVISION:111, F1:112, F2:113, F3:114, F4:115, F5:116, F6:117, F7:118, F8:119, F9:120, F10:121, F11:122, F12:123, NUMLOCK:144, SCROLL_LOCK:145, FIRST_MEDIA_KEY:166, LAST_MEDIA_KEY:183, 
+SEMICOLON:186, DASH:189, EQUALS:187, COMMA:188, PERIOD:190, SLASH:191, APOSTROPHE:192, TILDE:192, SINGLE_QUOTE:222, OPEN_SQUARE_BRACKET:219, BACKSLASH:220, CLOSE_SQUARE_BRACKET:221, WIN_KEY:224, MAC_FF_META:224, WIN_IME:229, PHANTOM:255};
+goog.events.KeyCodes.isTextModifyingKeyEvent = function(e) {
+  if(e.altKey && !e.ctrlKey || e.metaKey || e.keyCode >= goog.events.KeyCodes.F1 && e.keyCode <= goog.events.KeyCodes.F12) {
+    return false
+  }
+  switch(e.keyCode) {
+    case goog.events.KeyCodes.ALT:
+    ;
+    case goog.events.KeyCodes.CAPS_LOCK:
+    ;
+    case goog.events.KeyCodes.CONTEXT_MENU:
+    ;
+    case goog.events.KeyCodes.CTRL:
+    ;
+    case goog.events.KeyCodes.DOWN:
+    ;
+    case goog.events.KeyCodes.END:
+    ;
+    case goog.events.KeyCodes.ESC:
+    ;
+    case goog.events.KeyCodes.HOME:
+    ;
+    case goog.events.KeyCodes.INSERT:
+    ;
+    case goog.events.KeyCodes.LEFT:
+    ;
+    case goog.events.KeyCodes.MAC_FF_META:
+    ;
+    case goog.events.KeyCodes.META:
+    ;
+    case goog.events.KeyCodes.NUMLOCK:
+    ;
+    case goog.events.KeyCodes.NUM_CENTER:
+    ;
+    case goog.events.KeyCodes.PAGE_DOWN:
+    ;
+    case goog.events.KeyCodes.PAGE_UP:
+    ;
+    case goog.events.KeyCodes.PAUSE:
+    ;
+    case goog.events.KeyCodes.PHANTOM:
+    ;
+    case goog.events.KeyCodes.PRINT_SCREEN:
+    ;
+    case goog.events.KeyCodes.RIGHT:
+    ;
+    case goog.events.KeyCodes.SCROLL_LOCK:
+    ;
+    case goog.events.KeyCodes.SHIFT:
+    ;
+    case goog.events.KeyCodes.UP:
+    ;
+    case goog.events.KeyCodes.WIN_KEY:
+    ;
+    case goog.events.KeyCodes.WIN_KEY_RIGHT:
+      return false;
+    case goog.events.KeyCodes.WIN_KEY_FF_LINUX:
+      return!goog.userAgent.GECKO;
+    default:
+      return e.keyCode < goog.events.KeyCodes.FIRST_MEDIA_KEY || e.keyCode > goog.events.KeyCodes.LAST_MEDIA_KEY
+  }
+};
+goog.events.KeyCodes.firesKeyPressEvent = function(keyCode, opt_heldKeyCode, opt_shiftKey, opt_ctrlKey, opt_altKey) {
+  if(!goog.userAgent.IE && !(goog.userAgent.WEBKIT && goog.userAgent.isVersion("525"))) {
+    return true
+  }
+  if(goog.userAgent.MAC && opt_altKey) {
+    return goog.events.KeyCodes.isCharacterKey(keyCode)
+  }
+  if(opt_altKey && !opt_ctrlKey) {
+    return false
+  }
+  if(!opt_shiftKey && (opt_heldKeyCode == goog.events.KeyCodes.CTRL || opt_heldKeyCode == goog.events.KeyCodes.ALT)) {
+    return false
+  }
+  if(goog.userAgent.IE && opt_ctrlKey && opt_heldKeyCode == keyCode) {
+    return false
+  }
+  switch(keyCode) {
+    case goog.events.KeyCodes.ENTER:
+      return!(goog.userAgent.IE && goog.userAgent.isDocumentMode(9));
+    case goog.events.KeyCodes.ESC:
+      return!goog.userAgent.WEBKIT
+  }
+  return goog.events.KeyCodes.isCharacterKey(keyCode)
+};
+goog.events.KeyCodes.isCharacterKey = function(keyCode) {
+  if(keyCode >= goog.events.KeyCodes.ZERO && keyCode <= goog.events.KeyCodes.NINE) {
+    return true
+  }
+  if(keyCode >= goog.events.KeyCodes.NUM_ZERO && keyCode <= goog.events.KeyCodes.NUM_MULTIPLY) {
+    return true
+  }
+  if(keyCode >= goog.events.KeyCodes.A && keyCode <= goog.events.KeyCodes.Z) {
+    return true
+  }
+  if(goog.userAgent.WEBKIT && keyCode == 0) {
+    return true
+  }
+  switch(keyCode) {
+    case goog.events.KeyCodes.SPACE:
+    ;
+    case goog.events.KeyCodes.QUESTION_MARK:
+    ;
+    case goog.events.KeyCodes.NUM_PLUS:
+    ;
+    case goog.events.KeyCodes.NUM_MINUS:
+    ;
+    case goog.events.KeyCodes.NUM_PERIOD:
+    ;
+    case goog.events.KeyCodes.NUM_DIVISION:
+    ;
+    case goog.events.KeyCodes.SEMICOLON:
+    ;
+    case goog.events.KeyCodes.FF_SEMICOLON:
+    ;
+    case goog.events.KeyCodes.DASH:
+    ;
+    case goog.events.KeyCodes.EQUALS:
+    ;
+    case goog.events.KeyCodes.FF_EQUALS:
+    ;
+    case goog.events.KeyCodes.COMMA:
+    ;
+    case goog.events.KeyCodes.PERIOD:
+    ;
+    case goog.events.KeyCodes.SLASH:
+    ;
+    case goog.events.KeyCodes.APOSTROPHE:
+    ;
+    case goog.events.KeyCodes.SINGLE_QUOTE:
+    ;
+    case goog.events.KeyCodes.OPEN_SQUARE_BRACKET:
+    ;
+    case goog.events.KeyCodes.BACKSLASH:
+    ;
+    case goog.events.KeyCodes.CLOSE_SQUARE_BRACKET:
+      return true;
+    default:
+      return false
+  }
+};
+goog.events.KeyCodes.normalizeGeckoKeyCode = function(keyCode) {
+  switch(keyCode) {
+    case goog.events.KeyCodes.FF_EQUALS:
+      return goog.events.KeyCodes.EQUALS;
+    case goog.events.KeyCodes.FF_SEMICOLON:
+      return goog.events.KeyCodes.SEMICOLON;
+    case goog.events.KeyCodes.MAC_FF_META:
+      return goog.events.KeyCodes.META;
+    case goog.events.KeyCodes.WIN_KEY_FF_LINUX:
+      return goog.events.KeyCodes.WIN_KEY;
+    default:
+      return keyCode
+  }
+};
+goog.provide("goog.events.KeyEvent");
+goog.provide("goog.events.KeyHandler");
+goog.provide("goog.events.KeyHandler.EventType");
+goog.require("goog.events");
+goog.require("goog.events.BrowserEvent");
+goog.require("goog.events.EventTarget");
+goog.require("goog.events.EventType");
+goog.require("goog.events.KeyCodes");
+goog.require("goog.userAgent");
+goog.events.KeyHandler = function(opt_element, opt_capture) {
+  goog.events.EventTarget.call(this);
+  if(opt_element) {
+    this.attach(opt_element, opt_capture)
+  }
+};
+goog.inherits(goog.events.KeyHandler, goog.events.EventTarget);
+goog.events.KeyHandler.prototype.element_ = null;
+goog.events.KeyHandler.prototype.keyPressKey_ = null;
+goog.events.KeyHandler.prototype.keyDownKey_ = null;
+goog.events.KeyHandler.prototype.keyUpKey_ = null;
+goog.events.KeyHandler.prototype.lastKey_ = -1;
+goog.events.KeyHandler.prototype.keyCode_ = -1;
+goog.events.KeyHandler.EventType = {KEY:"key"};
+goog.events.KeyHandler.safariKey_ = {3:goog.events.KeyCodes.ENTER, 12:goog.events.KeyCodes.NUMLOCK, 63232:goog.events.KeyCodes.UP, 63233:goog.events.KeyCodes.DOWN, 63234:goog.events.KeyCodes.LEFT, 63235:goog.events.KeyCodes.RIGHT, 63236:goog.events.KeyCodes.F1, 63237:goog.events.KeyCodes.F2, 63238:goog.events.KeyCodes.F3, 63239:goog.events.KeyCodes.F4, 63240:goog.events.KeyCodes.F5, 63241:goog.events.KeyCodes.F6, 63242:goog.events.KeyCodes.F7, 63243:goog.events.KeyCodes.F8, 63244:goog.events.KeyCodes.F9, 
+63245:goog.events.KeyCodes.F10, 63246:goog.events.KeyCodes.F11, 63247:goog.events.KeyCodes.F12, 63248:goog.events.KeyCodes.PRINT_SCREEN, 63272:goog.events.KeyCodes.DELETE, 63273:goog.events.KeyCodes.HOME, 63275:goog.events.KeyCodes.END, 63276:goog.events.KeyCodes.PAGE_UP, 63277:goog.events.KeyCodes.PAGE_DOWN, 63289:goog.events.KeyCodes.NUMLOCK, 63302:goog.events.KeyCodes.INSERT};
+goog.events.KeyHandler.keyIdentifier_ = {"Up":goog.events.KeyCodes.UP, "Down":goog.events.KeyCodes.DOWN, "Left":goog.events.KeyCodes.LEFT, "Right":goog.events.KeyCodes.RIGHT, "Enter":goog.events.KeyCodes.ENTER, "F1":goog.events.KeyCodes.F1, "F2":goog.events.KeyCodes.F2, "F3":goog.events.KeyCodes.F3, "F4":goog.events.KeyCodes.F4, "F5":goog.events.KeyCodes.F5, "F6":goog.events.KeyCodes.F6, "F7":goog.events.KeyCodes.F7, "F8":goog.events.KeyCodes.F8, "F9":goog.events.KeyCodes.F9, "F10":goog.events.KeyCodes.F10, 
+"F11":goog.events.KeyCodes.F11, "F12":goog.events.KeyCodes.F12, "U+007F":goog.events.KeyCodes.DELETE, "Home":goog.events.KeyCodes.HOME, "End":goog.events.KeyCodes.END, "PageUp":goog.events.KeyCodes.PAGE_UP, "PageDown":goog.events.KeyCodes.PAGE_DOWN, "Insert":goog.events.KeyCodes.INSERT};
+goog.events.KeyHandler.USES_KEYDOWN_ = goog.userAgent.IE || goog.userAgent.WEBKIT && goog.userAgent.isVersion("525");
+goog.events.KeyHandler.prototype.handleKeyDown_ = function(e) {
+  if(goog.userAgent.WEBKIT && (this.lastKey_ == goog.events.KeyCodes.CTRL && !e.ctrlKey || this.lastKey_ == goog.events.KeyCodes.ALT && !e.altKey)) {
+    this.lastKey_ = -1;
+    this.keyCode_ = -1
+  }
+  if(goog.events.KeyHandler.USES_KEYDOWN_ && !goog.events.KeyCodes.firesKeyPressEvent(e.keyCode, this.lastKey_, e.shiftKey, e.ctrlKey, e.altKey)) {
+    this.handleEvent(e)
+  }else {
+    this.keyCode_ = goog.userAgent.GECKO ? goog.events.KeyCodes.normalizeGeckoKeyCode(e.keyCode) : e.keyCode
+  }
+};
+goog.events.KeyHandler.prototype.handleKeyup_ = function(e) {
+  this.lastKey_ = -1;
+  this.keyCode_ = -1
+};
+goog.events.KeyHandler.prototype.handleEvent = function(e) {
+  var be = e.getBrowserEvent();
+  var keyCode, charCode;
+  if(goog.userAgent.IE && e.type == goog.events.EventType.KEYPRESS) {
+    keyCode = this.keyCode_;
+    charCode = keyCode != goog.events.KeyCodes.ENTER && keyCode != goog.events.KeyCodes.ESC ? be.keyCode : 0
+  }else {
+    if(goog.userAgent.WEBKIT && e.type == goog.events.EventType.KEYPRESS) {
+      keyCode = this.keyCode_;
+      charCode = be.charCode >= 0 && be.charCode < 63232 && goog.events.KeyCodes.isCharacterKey(keyCode) ? be.charCode : 0
+    }else {
+      if(goog.userAgent.OPERA) {
+        keyCode = this.keyCode_;
+        charCode = goog.events.KeyCodes.isCharacterKey(keyCode) ? be.keyCode : 0
+      }else {
+        keyCode = be.keyCode || this.keyCode_;
+        charCode = be.charCode || 0;
+        if(goog.userAgent.MAC && charCode == goog.events.KeyCodes.QUESTION_MARK && keyCode == goog.events.KeyCodes.WIN_KEY) {
+          keyCode = goog.events.KeyCodes.SLASH
+        }
+      }
+    }
+  }
+  var key = keyCode;
+  var keyIdentifier = be.keyIdentifier;
+  if(keyCode) {
+    if(keyCode >= 63232 && keyCode in goog.events.KeyHandler.safariKey_) {
+      key = goog.events.KeyHandler.safariKey_[keyCode]
+    }else {
+      if(keyCode == 25 && e.shiftKey) {
+        key = 9
+      }
+    }
+  }else {
+    if(keyIdentifier && keyIdentifier in goog.events.KeyHandler.keyIdentifier_) {
+      key = goog.events.KeyHandler.keyIdentifier_[keyIdentifier]
+    }
+  }
+  var repeat = key == this.lastKey_;
+  this.lastKey_ = key;
+  var event = new goog.events.KeyEvent(key, charCode, repeat, be);
+  this.dispatchEvent(event)
+};
+goog.events.KeyHandler.prototype.getElement = function() {
+  return this.element_
+};
+goog.events.KeyHandler.prototype.attach = function(element, opt_capture) {
+  if(this.keyUpKey_) {
+    this.detach()
+  }
+  this.element_ = element;
+  this.keyPressKey_ = goog.events.listen(this.element_, goog.events.EventType.KEYPRESS, this, opt_capture);
+  this.keyDownKey_ = goog.events.listen(this.element_, goog.events.EventType.KEYDOWN, this.handleKeyDown_, opt_capture, this);
+  this.keyUpKey_ = goog.events.listen(this.element_, goog.events.EventType.KEYUP, this.handleKeyup_, opt_capture, this)
+};
+goog.events.KeyHandler.prototype.detach = function() {
+  if(this.keyPressKey_) {
+    goog.events.unlistenByKey(this.keyPressKey_);
+    goog.events.unlistenByKey(this.keyDownKey_);
+    goog.events.unlistenByKey(this.keyUpKey_);
+    this.keyPressKey_ = null;
+    this.keyDownKey_ = null;
+    this.keyUpKey_ = null
+  }
+  this.element_ = null;
+  this.lastKey_ = -1;
+  this.keyCode_ = -1
+};
+goog.events.KeyHandler.prototype.disposeInternal = function() {
+  goog.events.KeyHandler.superClass_.disposeInternal.call(this);
+  this.detach()
+};
+goog.events.KeyEvent = function(keyCode, charCode, repeat, browserEvent) {
+  goog.events.BrowserEvent.call(this, browserEvent);
+  this.type = goog.events.KeyHandler.EventType.KEY;
+  this.keyCode = keyCode;
+  this.charCode = charCode;
+  this.repeat = repeat
+};
+goog.inherits(goog.events.KeyEvent, goog.events.BrowserEvent);
 goog.provide("keybord_events.core");
 goog.require("cljs.core");
-goog.require("goog.events");
+goog.require("goog.events.KeyHandler");
 keybord_events.core.log_event = function log_event(event) {
   return console.log(event)
 };
