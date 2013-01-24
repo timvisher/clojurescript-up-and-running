@@ -1,4 +1,4 @@
 (ns hello-compiler.hello)
 
 (defn ^:export main []
-  (.write js/document (take 10 (iterate inc 20))))
+  (.log js/console "This is accesing the host platform, Charnock…"))

@@ -9,5 +9,4 @@
   :plugins [[lein-cljsbuild "0.3.0"]]
   :cljsbuild {:builds [{:source-paths ["src/cljs"]
                         :compiler {:output-to "resources/public/hello.js"
-                                   :optimizations :advanced
-                                   :pretty-print false}}]})
+                                   :optimizations :advanced}}]})
