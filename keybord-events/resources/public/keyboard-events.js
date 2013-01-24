@@ -22409,6 +22409,6 @@ keybord_events.core.log_event = function log_event(event) {
   return console.log(event)
 };
 keybord_events.core.keyboard_events = function keyboard_events() {
-  return new goog.events.KeyHandler(document)
+  return goog.events.listen(new goog.events.KeyHandler(document), goog.events.KeyHandler.EventType.KEY, keybord_events.core.log_event)
 };
 keybord_events.core.keyboard_events.call(null);
